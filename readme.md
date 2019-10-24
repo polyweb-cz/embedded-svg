@@ -36,7 +36,7 @@ possible with SVG linked as an image like `<img src="icons/help.svg">`.
 
 Require library by [Composer](https://getcomposer.org/):
 ```
-composer require milo/embedded-svg
+composer require polyweb-cz/embedded-svg
 ```
 
 Register extension in your `config.neon` and configure it:
