@@ -1,24 +1,12 @@
 <?php
 
-namespace Milo\EmbeddedSvg;
+namespace PolywebCz\EmbeddedSvg;
 
-
-interface Exception
-{
-}
-
-
-class RuntimeException extends \RuntimeException implements Exception
-{
-}
-
-
-class XmlErrorException extends \ErrorException implements Exception
+class XmlErrorException extends \ErrorException implements \Throwable
 {
 	private static $handling = [];
 
-
-	final public function __construct(\LibXMLError $error, self $previous = null)
+	final public function __construct(\LibXMLError $error, ?self $previous = null)
 	{
 		parent::__construct(trim($error->message), $error->code, $error->level, $error->file, $error->line, $previous);
 	}
@@ -40,4 +28,5 @@ class XmlErrorException extends \ErrorException implements Exception
 		libxml_use_internal_errors(array_pop(self::$handling));
 		return $e;
 	}
+
 }

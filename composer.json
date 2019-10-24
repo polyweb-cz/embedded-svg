@@ -1,21 +1,29 @@
 {
-	"name": "milo/embedded-svg",
+	"name": "polyweb-cz/embedded-svg",
 	"type": "library",
 	"description": "Latte macro to embed SVG from file into HTML",
 	"keywords": ["nette", "latte", "svg", "embedded", "macro"],
 	"license": ["MIT"],
+	"version": "1.1.1",
 	"authors": [
 		{
 			"name": "Miloslav Hůla",
 			"email": "miloslav.hula@gmail.com",
 			"homepage": "https://github.com/milo"
+		},
+		{
+			"name": "Polyweb.cz",
+			"email": "developer@polyweb.cz",
+			"homepage": "https://polyweb.cz/"
 		}
 	],
 	"require": {
 		"php": ">=7.1.0",
 		"ext-dom": "*",
-		"latte/latte": "^2.4.0"
-	},
+		"ext-libxml": "*",
+		"latte/latte": "^2.4.0",
+		"nette/di": "^2.4.0"
+    },
 	"autoload": {
 		"classmap": ["src/"]
 	}

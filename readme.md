@@ -1,8 +1,10 @@
+# 
+
 # Example
 ```latte
 <h1>
     Publications
-    {embeddedSvg 'icons/help.svg',
+    {svg 'icons/help.svg',
         class => 'help-icon',
         data-toggle => 'popover',
         data-content => 'This is a list of your publications for last 5 years.'
@@ -40,7 +42,7 @@ composer require milo/embedded-svg
 Register extension in your `config.neon` and configure it:
 ```neon
 extensions:
-    embeddedSvg: Milo\EmbeddedSvg\Extension
+    embeddedSvg: PolywebCz\EmbeddedSvg\Extension
 
 embeddedSvg:
     baseDir: %wwwDir%/img

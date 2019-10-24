@@ -1,15 +1,15 @@
 <?php
 
-namespace Milo\EmbeddedSvg;
-
+namespace PolywebCz\EmbeddedSvg;
 
 class MacroSetting
 {
+
 	/** @var string */
 	public $baseDir;
 
 	/** @var string */
-	public $macroName = 'embeddedSvg';
+	public $macroName = 'svg';
 
 	/** @var int */
 	public $libXmlOptions = LIBXML_NOBLANKS;
@@ -23,10 +23,9 @@ class MacroSetting
 	/** @var callable[] */
 	public $onLoad = [];
 
-
 	public static function createFromArray(array $setting): self
 	{
-		$me = new self;
+		$me = new self();
 		foreach ($setting as $property => $value) {
 			$me->{$property} = $value;
 		}
@@ -36,12 +35,13 @@ class MacroSetting
 
 	public function & __get($name)
 	{
-		throw new \LogicException('Cannot read an undeclared property ' . get_class($this) . "::\$$name.");
+		throw new \LogicException('Cannot read an undeclared property ' . static::class . "::\$$name.");
 	}
 
 
 	public function __set($name, $value)
 	{
-		throw new \LogicException('Cannot write to an undeclared property ' . get_class($this) . "::\$$name.");
+		throw new \LogicException('Cannot write to an undeclared property ' . static::class . "::\$$name.");
 	}
+
 }

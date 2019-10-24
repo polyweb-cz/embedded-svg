@@ -1,6 +1,6 @@
 <?php
 
-namespace Milo\EmbeddedSvg;
+namespace PolywebCz\EmbeddedSvg;
 
 use DOMDocument;
 use Latte\CompileException;
@@ -9,11 +9,11 @@ use Latte\MacroNode;
 use Latte\Macros\MacroSet;
 use Latte\PhpWriter;
 
-
 class Macro extends MacroSet
 {
-	private $setting;
 
+    /** @var MacroSetting */
+	private $setting;
 
 	public function __construct(Compiler $compiler, MacroSetting $setting)
 	{
@@ -38,58 +38,91 @@ class Macro extends MacroSet
 	public function open(MacroNode $node, PhpWriter $writer)
 	{
 		$file = $node->tokenizer->fetchWord();
-		if ($file === false) {
-			throw new CompileException('Missing SVG file path.');
-		}
 
-		$path = $this->setting->baseDir . DIRECTORY_SEPARATOR . trim($file, '\'"');
-		if (!is_file($path)) {
-			throw new CompileException("SVG file '$path' does not exist.");
-		}
+        if ($file === false) {
+            throw new CompileException('Missing SVG file path.');
+        }
 
-		XmlErrorException::try();
-		$dom = new DOMDocument('1.0', 'UTF-8');
-		$dom->preserveWhiteSpace = false;
-		@$dom->load($path, $this->setting->libXmlOptions);  # @ - triggers warning on empty XML
-		if ($e = XmlErrorException::catch()) {
-			throw new CompileException("Failed to load SVG content from '$path'.", 0, $e);
-		}
-		foreach ($this->setting->onLoad as $cb) {
-			$cb($dom, $this->setting);
-		}
+        if (substr($file, 0, 1) !== '$') {
+            /**
+             * $file is not just a variable, treat as a direct path
+             */
+            $file = trim($file, '\'"');
+            $file = "'$file'";
+        }
 
-		if (strtolower($dom->documentElement->nodeName) !== 'svg') {
-			throw new CompileException("Sorry, only <svg> (non-prefixed) root element is supported but {$dom->documentElement->nodeName} is used. You may open feature request.");
-		}
+        $macroAttributes = $writer->formatArray();
 
-		$macroAttributes = $writer->formatArray();
-		$svgAttributes = [
-			'xmlns' => $dom->documentElement->namespaceURI,
-		];
-		foreach ($dom->documentElement->attributes as $attribute) {
-			$svgAttributes[$attribute->name] = $attribute->value;
-		}
+        $setting = [
+            'baseDir' => $this->setting->baseDir,
+            'macroName' => $this->setting->macroName,
+            'libXmlOptions' => $this->setting->libXmlOptions,
+            'prettyOutput' => $this->setting->prettyOutput,
+            'defaultAttributes' => $this->setting->defaultAttributes,
+            'onLoad' => $this->setting->onLoad,
+        ];
 
-		$inner = '';
-		$dom->formatOutput = $this->setting->prettyOutput;
-		foreach ($dom->documentElement->childNodes as $childNode) {
-			$inner .= $dom->saveXML($childNode);
-		}
-
-		return $writer->write('
-			echo "<svg";
-			foreach (%0.raw + %1.var as $n => $v) {
-				if ($v === null || $v === false) {
-					continue;
-				} elseif ($v === true) {
-					echo " " . %escape($n);
-				} else {
-					echo " " . %escape($n) . "=\"" . %escape($v) . "\"";
-				}
-			};
-			echo ">" . %2.var . "</svg>";
-			',
-			$macroAttributes, $this->setting->defaultAttributes + $svgAttributes, $inner
+		return $writer->write(
+            'echo %0.raw::includeSvgContent(%1.var, (%2.raw), %3.raw);',
+			self::class,
+            $setting,
+            $file,
+            $macroAttributes
 		);
 	}
+
+	public static function includeSvgContent($setting, $file, $attributes)
+    {
+	    $setting = (object) $setting;
+
+        $path = $setting->baseDir . DIRECTORY_SEPARATOR . trim($file, '\'"');
+        if (!is_file($path)) {
+            throw new CompileException("SVG file '$path' does not exist.");
+        }
+
+        XmlErrorException::try();
+        $dom = new DOMDocument('1.0', 'UTF-8');
+        $dom->preserveWhiteSpace = false;
+        @$dom->load($path, $setting->libXmlOptions);  // @ - triggers warning on empty XML
+        if ($e = XmlErrorException::catch()) {
+            throw new CompileException("Failed to load SVG content from '$path'.", 0, $e);
+        }
+        foreach ($setting->onLoad as $cb) {
+            $cb($dom, $setting);
+        }
+
+        if (strtolower($dom->documentElement->nodeName) !== 'svg') {
+            throw new CompileException("Sorry, only <svg> (non-prefixed) root element is supported but {$dom->documentElement->nodeName} is used. You may open feature request.");
+        }
+
+        $svgAttributes = [
+            'xmlns' => $dom->documentElement->namespaceURI,
+        ];
+        foreach ($dom->documentElement->attributes as $attribute) {
+            $svgAttributes[$attribute->name] = $attribute->value;
+        }
+
+        $inner = '';
+        $dom->formatOutput = $setting->prettyOutput;
+        foreach ($dom->documentElement->childNodes as $childNode) {
+            $inner .= $dom->saveXML($childNode);
+        }
+
+        $svg = '<svg';
+
+        foreach ($attributes + $setting->defaultAttributes + $svgAttributes as $n => $v) {
+            if ($v === null || $v === false) {
+                continue;
+            } elseif ($v === true) {
+                $svg .= ' ' . htmlspecialchars($n);
+            } else {
+                $svg .= ' ' . htmlspecialchars($n) . '="' . htmlspecialchars($v) . '"';
+            }
+        }
+
+        $svg .= '>' . $inner . '</svg>';
+
+        return $svg;
+    }
+
 }
